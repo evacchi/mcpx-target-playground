@@ -1,35 +1,30 @@
-use serde_json::Value;
-use std::error::Error;
+use extism_pdk::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
-pub struct Config {
-    pub api_key: String,
+#[derive(Serialize, Deserialize)]
+struct Input {
+    url: String,
 }
 
-impl TryFrom<&Value> for Config {
-    type Error = Box<dyn Error>;
-
-    fn try_from(value: &Value) -> Result<Self, Self::Error> {
-        let api_key = value["api-key"]
-            .as_str()
-            .ok_or("Missing or invalid api-key")?
-            .to_string();
-        Ok(Config { api_key })
-    }
+#[derive(Serialize, Deserialize)]
+struct Config {
+    #[serde(rename = "api-key")]
+    api_key: String,
 }
 
-pub async fn api_key_fetch(input: &Value, config: &Config) -> Result<Value, Box<dyn Error>> {
-    let url = input["url"]
-        .as_str()
-        .ok_or("Missing or invalid url parameter")?;
+#[plugin_fn]
+pub fn api_key_fetch(Json(input): Json<Input>) -> FnResult<Json<String>> {
+    // Get the configuration
+    let config: Config = config_get()?;
     
-    // Replace $APIKEY with the actual API key
-    let url = url.replace("$APIKEY", &config.api_key);
+    // Replace $APIKEY with the actual key
+    let url = input.url.replace("$APIKEY", &config.api_key);
     
     // Fetch the content
-    let response = reqwest::get(&url).await?;
-    let text = response.text().await?;
+    let response = http::request(
+        http::Request::new("GET", &url)
+            .with_header("User-Agent", "Extism Plugin")
+    )?.into_string()?;
     
-    // Return the response as a JSON string
-    Ok(Value::String(text))
+    Ok(Json(response))
 }
