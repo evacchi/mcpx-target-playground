@@ -1,0 +1,29 @@
+{
+  "schema": {
+    "tools": [
+      {
+        "name": "api-key-fetch",
+        "description": "Fetches content from a URL, replacing $APIKEY with a configured API key",
+        "inputSchema": {
+          "type": "object",
+          "required": ["url"],
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "The URL to fetch from. Use $APIKEY where the API key should be inserted"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "description": "Fetch with API key substitution",
+  "requirements": {
+    "v0": {
+      "configs": ["api-key"],
+      "network": {
+        "required": true
+      }
+    }
+  }
+}
